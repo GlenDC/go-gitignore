@@ -17,15 +17,14 @@ var RootCmd = &cobra.Command{
 	Use:   "gitignore",
 	Short: "Create and manage gitignore files.",
 	Long: `Create and manage gitignore files using gitignore files
-from a remote gitignore file repository.
-
-By the default github.com/github/gitignore is used to fetch gitignore files.`,
+from github.com/github/gitignore.`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	RootCmd.AddCommand(
+		versionCmd,
 		createCmd,
 	)
 

@@ -19,9 +19,7 @@ var createCfg struct {
 var createCmd = &cobra.Command{
 	Use:   "create template",
 	Short: "Create a new gitignore file based on a template.",
-	Long: `Create a new gitignore file based on a template
-which by default is fetched from github.com/github/gitignore`,
-	RunE: create,
+	RunE:  create,
 }
 
 func create(cmd *cobra.Command, args []string) error {
