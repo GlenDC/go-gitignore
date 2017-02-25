@@ -15,8 +15,8 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "gitignore",
-	Short: "Create and manage gitignore files.",
-	Long: `Create and manage gitignore files using gitignore files
+	Short: "Create and list gitignore files.",
+	Long: `Create and list gitignore files using gitignore files
 from github.com/github/gitignore.`,
 }
 
@@ -25,7 +25,9 @@ from github.com/github/gitignore.`,
 func Execute() {
 	RootCmd.AddCommand(
 		versionCmd,
+		listCmd,
 		createCmd,
+		printCmd,
 	)
 
 	if err := RootCmd.Execute(); err != nil {
