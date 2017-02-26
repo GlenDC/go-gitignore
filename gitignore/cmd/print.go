@@ -10,22 +10,21 @@ import (
 // printCmd represents the command used to print
 // the content of a gitignore template
 var printCmd = &cobra.Command{
-	Use:   "print template",
+	Use:   "print template...",
 	Short: "Print the content of a template.",
 	RunE:  print,
 }
 
 func print(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return errors.New("template argument is required")
+	if len(args) < 1 {
+		return errors.New("at least 1 template argument is required")
 	}
+	args = unique(args)
 
 	// download the gitignore file based on a template
-	template := args[0]
-	content, err := download(template)
+	content, err := downloadAll(args...)
 	if err != nil {
-		return fmt.Errorf(
-			"couldn't downloaded gitignore template %q: %s", template, err)
+		return err
 	}
 
 	fmt.Println(string(content))

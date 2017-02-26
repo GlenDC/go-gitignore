@@ -17,26 +17,25 @@ var createCfg struct {
 
 // createCmd represents the command used to create gitignore files
 var createCmd = &cobra.Command{
-	Use:   "create template",
-	Short: "Create a new gitignore file based on a template.",
+	Use:   "create template...",
+	Short: "Create a new gitignore file based on given templates.",
 	RunE:  create,
 }
 
 func create(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return errors.New("template argument is required")
+	if len(args) < 1 {
+		return errors.New("at least one template argument is required")
 	}
+	args = unique(args)
 
 	if createCfg.Target == "" {
 		createCfg.Target = ".gitignore"
 	}
 
 	// download the gitignore file based on a template
-	template := args[0]
-	content, err := download(template)
+	content, err := downloadAll(args...)
 	if err != nil {
-		return fmt.Errorf(
-			"couldn't downloaded gitignore template %q: %s", template, err)
+		return err
 	}
 
 	flags, mode := os.O_WRONLY|os.O_CREATE, os.FileMode(0644)
