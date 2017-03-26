@@ -21,8 +21,13 @@ func print(cmd *cobra.Command, args []string) error {
 	}
 	args = unique(args)
 
+	provider, err := newProvider()
+	if err != nil {
+		return err
+	}
+
 	// download the gitignore file based on a template
-	content, err := downloadAll(providerCfg.GetProvider(), args...)
+	content, err := downloadAll(provider, args...)
 	if err != nil {
 		return err
 	}

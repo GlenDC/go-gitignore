@@ -32,8 +32,13 @@ func create(cmd *cobra.Command, args []string) error {
 		createCfg.Target = ".gitignore"
 	}
 
+	provider, err := newProvider()
+	if err != nil {
+		return err
+	}
+
 	// download the gitignore file based on a template
-	content, err := downloadAll(providerCfg.GetProvider(), args...)
+	content, err := downloadAll(provider, args...)
 	if err != nil {
 		return err
 	}

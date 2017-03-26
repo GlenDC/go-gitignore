@@ -8,8 +8,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+// persistent flags
 var (
 	cfgFile string
+	ghtoken string
+	ghrepo  string
+	pkind   providerKind
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -36,16 +40,21 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	//cobra.OnInitialize(initConfig)
 
 	// global flags
 
 	RootCmd.PersistentFlags().StringVar(
 		&cfgFile, "config", "",
 		"config file (default is $HOME/.go-gitignore.yaml)")
-
-	// global provider flags
-	providerCfg.RegisterPersistentFlags(RootCmd)
+	RootCmd.PersistentFlags().Var(&pkind, "provider",
+		"defines the provider to use for getting gitignore content, default: github, options: github")
+	RootCmd.PersistentFlags().StringVar(
+		&ghtoken, "github-token", "",
+		"github token used for some commands in case github provider is used")
+	RootCmd.PersistentFlags().StringVar(
+		&ghrepo, "github-repo", "github/gitignore",
+		"github repo used in case github provider is used")
 }
 
 // initConfig reads in config file and ENV variables if set.

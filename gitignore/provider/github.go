@@ -16,18 +16,24 @@ import (
 // GithubProvider returns a gitignoreProvider,
 // which uses the official gitignore GitHub repo,
 // as a source for all the gitignore info/content requests.
-func GithubProvider(token string) GitignoreProvider {
-	return &githubProvider{token: token}
+func GithubProvider(owner, repo, token string) GitignoreProvider {
+	return &githubProvider{
+		owner: owner,
+		repo:  repo,
+		token: token,
+	}
 }
 
 type githubProvider struct {
+	owner string
+	repo  string
 	token string
 }
 
 // Get implements GitignoreProvider.Get
 func (p *githubProvider) Get(template string) (content []byte, err error) {
 	template = strings.TrimSuffix(template, ".gitignore")
-	url := fmt.Sprintf("%s/%s.gitignore", repository, template)
+	url := fmt.Sprintf("%s/%s.gitignore", p.getRawURL(), template)
 
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
@@ -60,7 +66,7 @@ func (p *githubProvider) List() (templates []string, err error) {
 	client := github.NewClient(tc)
 
 	branch, _, err := client.Repositories.GetBranch(
-		ctx, repoOwner, repoName, repoBranch)
+		ctx, p.owner, p.repo, "master")
 	if err != nil {
 		err = fmt.Errorf("couldn't get repo master branch: %s", err)
 		return
@@ -68,7 +74,7 @@ func (p *githubProvider) List() (templates []string, err error) {
 
 	masterSHA := branch.Commit.Commit.Tree.GetSHA()
 	tree, _, err := client.Git.GetTree(
-		ctx, repoOwner, repoName, masterSHA, false)
+		ctx, p.owner, p.repo, masterSHA, false)
 	if err != nil {
 		err = fmt.Errorf("couldn't get repo master tree: %s", err)
 		return
@@ -88,13 +94,11 @@ func (p *githubProvider) List() (templates []string, err error) {
 	return
 }
 
-// URL/repo constants
-const (
-	repoOwner  = "github"
-	repoName   = "gitignore"
-	repoBranch = "master"
-	repository = "https://raw.githubusercontent.com/github/gitignore/master"
-)
+func (p *githubProvider) getRawURL() string {
+	return fmt.Sprintf(
+		"https://raw.githubusercontent.com/%s/%s/master",
+		p.owner, p.repo)
+}
 
 // Regex
 const ghre = `^([A-Z][A-Za-z+_\-0-9]*)\.gitignore$`

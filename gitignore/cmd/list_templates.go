@@ -15,7 +15,11 @@ var listTemplatesCmd = &cobra.Command{
 
 // templates is the function for the TemplatesCmd
 func listTemplates(*cobra.Command, []string) error {
-	provider := providerCfg.GetProvider()
+	provider, err := newProvider()
+	if err != nil {
+		return err
+	}
+
 	templates, err := provider.List()
 	if err != nil {
 		return err

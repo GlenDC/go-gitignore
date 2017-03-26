@@ -2,16 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/glendc/go-gitignore/gitignore/provider"
-	"github.com/spf13/cobra"
 )
-
-type gitignoreProviderConfig struct {
-	kind     providerKind
-	ghtoken  string
-	provider provider.GitignoreProvider
-}
 
 type providerKind string
 
@@ -32,27 +26,17 @@ func (pk *providerKind) Type() string {
 
 func (pk *providerKind) String() string { return string(*pk) }
 
-func (cfg gitignoreProviderConfig) RegisterPersistentFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().Var(
-		&cfg.kind, "provider",
-		"defines the provider to use for getting gitignore content, default: github, options: github")
-	cmd.PersistentFlags().StringVar(
-		&cfg.ghtoken, "github-token", "",
-		"github token used for some commands in case github provider is used")
-}
-
-func (cfg gitignoreProviderConfig) GetProvider() provider.GitignoreProvider {
-	if cfg.provider == nil {
-		switch cfg.kind {
-		default:
-			cfg.provider = provider.GithubProvider(cfg.ghtoken)
+func newProvider() (provider.GitignoreProvider, error) {
+	switch pkind {
+	default:
+		parts := strings.Split(ghrepo, "/")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("%q is not a valid github repo", ghrepo)
 		}
+
+		return provider.GithubProvider(parts[0], parts[1], ghtoken), nil
 	}
-
-	return cfg.provider
 }
-
-var providerCfg gitignoreProviderConfig
 
 // URL constants
 const (
