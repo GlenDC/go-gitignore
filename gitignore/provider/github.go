@@ -73,22 +73,55 @@ func (p *githubProvider) List() (templates []string, err error) {
 	}
 
 	masterSHA := branch.Commit.Commit.Tree.GetSHA()
-	tree, _, err := client.Git.GetTree(
-		ctx, p.owner, p.repo, masterSHA, false)
+	templates, err = p.getTreeEntries(ctx, client, masterSHA, "")
+
+	if len(templates) == 0 {
+		err = errors.New("no templates could be found")
+		return
+	}
+
+	return
+}
+
+func (p *githubProvider) getTreeEntries(ctx context.Context, client *github.Client, sha, subdir string) (templates []string, err error) {
+	tree, _, err := client.Git.GetTree(ctx, p.owner, p.repo, sha, false)
 	if err != nil {
 		err = fmt.Errorf("couldn't get repo master tree: %s", err)
 		return
 	}
 
+	var subtrees []github.TreeEntry
+
 	for _, entry := range tree.Entries {
+		if entry.GetMode() == "040000" {
+			// subdirectory, we'll parse it later
+			subtrees = append(subtrees, entry)
+			continue
+		}
+
 		if match := ghrex.FindStringSubmatch(entry.GetPath()); len(match) == 2 {
-			templates = append(templates, match[1])
+			template := match[1]
+			if subdir != "" {
+				template = subdir + template
+			}
+			templates = append(templates, template)
 		}
 	}
 
-	if len(templates) == 0 {
-		err = errors.New("no templates could be found")
-		return
+	var subTemplates []string
+	for _, subtree := range subtrees {
+		subTemplates, err = p.getTreeEntries(
+			ctx,
+			client,
+			subtree.GetSHA(),
+			subdir+subtree.GetPath()+"/",
+		)
+		if err != nil {
+			templates = nil
+			return
+		}
+
+		templates = append(subTemplates, templates...)
 	}
 
 	return

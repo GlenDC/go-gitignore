@@ -38,11 +38,6 @@ func newProvider() (provider.GitignoreProvider, error) {
 	}
 }
 
-// URL constants
-const (
-	repository = "https://raw.githubusercontent.com/github/gitignore/master"
-)
-
 // downloadAll downloads all gitignore files based on given templates,
 // or none in case of an error
 func downloadAll(provider provider.GitignoreProvider, templates ...string) ([]byte, error) {
