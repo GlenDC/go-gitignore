@@ -1,9 +1,6 @@
 package cmd
 
-import (
-	"github.com/glendc/go-gitignore/gitignore/cmd/list"
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 // listCmd represents a root command for all resource list commands
 var listCmd = &cobra.Command{
@@ -13,6 +10,6 @@ var listCmd = &cobra.Command{
 
 func init() {
 	listCmd.AddCommand(
-		list.TemplatesCmd,
+		listTemplatesCmd,
 	)
 }

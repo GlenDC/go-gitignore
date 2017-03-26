@@ -33,7 +33,7 @@ func create(cmd *cobra.Command, args []string) error {
 	}
 
 	// download the gitignore file based on a template
-	content, err := downloadAll(args...)
+	content, err := downloadAll(providerCfg.GetProvider(), args...)
 	if err != nil {
 		return err
 	}

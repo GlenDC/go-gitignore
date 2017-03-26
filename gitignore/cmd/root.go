@@ -43,6 +43,9 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(
 		&cfgFile, "config", "",
 		"config file (default is $HOME/.go-gitignore.yaml)")
+
+	// global provider flags
+	providerCfg.RegisterPersistentFlags(RootCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.

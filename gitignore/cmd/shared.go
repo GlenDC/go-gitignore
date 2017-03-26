@@ -1,12 +1,58 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
+
+	"github.com/glendc/go-gitignore/gitignore/provider"
+	"github.com/spf13/cobra"
 )
+
+type gitignoreProviderConfig struct {
+	kind     providerKind
+	ghtoken  string
+	provider provider.GitignoreProvider
+}
+
+type providerKind string
+
+// Set is only called when flag is defined,
+// therefore we'll default providerKind to "github"
+func (pk *providerKind) Set(val string) error {
+	if val != "github" {
+		return fmt.Errorf("%q is not a valid providerKind", val)
+	}
+
+	*pk = providerKind(val)
+	return nil
+}
+
+func (pk *providerKind) Type() string {
+	return "providerKind"
+}
+
+func (pk *providerKind) String() string { return string(*pk) }
+
+func (cfg gitignoreProviderConfig) RegisterPersistentFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().Var(
+		&cfg.kind, "provider",
+		"defines the provider to use for getting gitignore content, default: github, options: github")
+	cmd.PersistentFlags().StringVar(
+		&cfg.ghtoken, "github-token", "",
+		"github token used for some commands in case github provider is used")
+}
+
+func (cfg gitignoreProviderConfig) GetProvider() provider.GitignoreProvider {
+	if cfg.provider == nil {
+		switch cfg.kind {
+		default:
+			cfg.provider = provider.GithubProvider(cfg.ghtoken)
+		}
+	}
+
+	return cfg.provider
+}
+
+var providerCfg gitignoreProviderConfig
 
 // URL constants
 const (
@@ -15,13 +61,17 @@ const (
 
 // downloadAll downloads all gitignore files based on given templates,
 // or none in case of an error
-func downloadAll(templates ...string) ([]byte, error) {
+func downloadAll(provider provider.GitignoreProvider, templates ...string) ([]byte, error) {
+	if provider == nil {
+		return nil, fmt.Errorf("no gitignore provider given")
+	}
+
 	var content, current []byte
 	var header string
 	var err error
 
 	for _, template := range templates {
-		current, err = download(template)
+		current, err = provider.Get(template)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %q: %s", template, err)
 		}
@@ -33,24 +83,6 @@ func downloadAll(templates ...string) ([]byte, error) {
 	}
 
 	return content, nil
-}
-
-// download a gitignore file based on a given template
-func download(template string) ([]byte, error) {
-	template = strings.TrimSuffix(template, ".gitignore")
-	url := fmt.Sprintf("%s/%s.gitignore", repository, template)
-
-	resp, err := http.DefaultClient.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
-	}
-
-	return ioutil.ReadAll(resp.Body)
 }
 
 // unique returns all unique elements in an array (n^2)
