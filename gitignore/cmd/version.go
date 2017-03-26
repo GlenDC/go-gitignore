@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"runtime"
+
+	"github.com/glendc/go-gitignore/gitignore/version"
 
 	"github.com/spf13/cobra"
 )
@@ -15,10 +16,9 @@ const (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Get the version number of the cli.",
-	Run:   version,
+	Run:   printVersion,
 }
 
-func version(*cobra.Command, []string) {
-	fmt.Printf("gitignore v%s %s/%s\n",
-		cliVersion, runtime.GOOS, runtime.GOARCH)
+func printVersion(*cobra.Command, []string) {
+	fmt.Printf("go-gitignore\n%s\n", version.GogitignoreVersion)
 }
