@@ -73,8 +73,6 @@ const (
 var RootCmd = &cobra.Command{
 	Use:   "gitignore",
 	Short: "Create and list gitignore files.",
-	Long: `Create and list gitignore files using gitignore files
-from github.com/github/gitignore.`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.

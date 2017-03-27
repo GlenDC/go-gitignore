@@ -1,10 +1,11 @@
 # go-gitignore
 
-A Go CLI to manage gitignore files based on the github/gitignore repo
+A Go CLI to create and list gitignore files,
+taken from a github repository or local directory.
 
 ## Configuration
 
-Example YAML Configuration (default: $HOME/.go-gitignore.yaml):
+Example YAML Configuration (default: `$HOME/.go-gitignore.yaml`):
 
 ```yaml
 ---
