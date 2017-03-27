@@ -5,22 +5,30 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/glendc/go-gitignore/gitignore/logger"
 )
 
 // LocalProvider returns a gitignoreProvider,
 // which uses a local directory,
 // as a source for all the gitignore info/content requests.
-func LocalProvider(path string) GitignoreProvider {
-	return &localProvider{path: path}
+func LocalProvider(path string, logger logger.Logger) GitignoreProvider {
+	return &localProvider{
+		path:   path,
+		logger: logger,
+	}
 }
 
 type localProvider struct {
-	path string
+	path   string
+	logger logger.Logger
 }
 
 // Get implements GitignoreProvider.Get
 func (p *localProvider) Get(template string) (content []byte, err error) {
-	file, err := os.Open(p.templatePath(template))
+	tpath := p.templatePath(template)
+	p.logger.Infof("opening template from %q", tpath)
+	file, err := os.Open(tpath)
 	if err != nil {
 		err = fmt.Errorf("template %q could be found at %q", template, p.path)
 		return
@@ -33,6 +41,7 @@ func (p *localProvider) Get(template string) (content []byte, err error) {
 
 // List implements GitignoreProvider.List
 func (p *localProvider) List() (templates []string, err error) {
+	p.logger.Infof("listening templates from %q", p.path)
 	return p.listDir(p.path, "", 0)
 }
 

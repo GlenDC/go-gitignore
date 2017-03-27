@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os/user"
 	"path"
+	"sync"
+
+	loggerpkg "github.com/glendc/go-gitignore/gitignore/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,6 +16,10 @@ import (
 var (
 	cfgFile string
 
+	// log flags
+	logFile    string
+	logVerbose bool
+
 	// github mode
 	ghtoken string
 	ghrepo  string
@@ -22,6 +28,21 @@ var (
 	// local mode
 	localPath string
 )
+
+// log content
+var (
+	_logger     loggerpkg.Logger
+	_loggerOnce sync.Once
+)
+
+// logger returns the logger to be used
+func logger() loggerpkg.Logger {
+	_loggerOnce.Do(func() {
+		_logger = loggerpkg.New(logFile, logVerbose)
+	})
+
+	return _logger
+}
 
 // config constants
 const (
@@ -42,6 +63,7 @@ var (
 // config names
 const (
 	cfgProviderKey    = "provider"
+	cfgLogFileKey     = "log.path"
 	cfgGithubRepoKey  = "github.repository"
 	cfgGithubTokenKey = "github.token"
 	cfgLocalPathKey   = "local.path"
@@ -65,8 +87,12 @@ func Execute() {
 		printCmd,
 	)
 
+	defer func() {
+		logger().Infoln("exiting go-gitignore...")
+	}()
+
 	if err := RootCmd.Execute(); err != nil {
-		log.Fatalln(err)
+		logger().Errorln(err)
 	}
 }
 
@@ -78,6 +104,12 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(
 		&cfgFile, "config", "",
 		fmt.Sprintf("config file used (default: %s)", defCfgFile))
+
+	RootCmd.PersistentFlags().StringVar(
+		&logFile, "log-path", "", "log file used, logs to STDERR if no file is specified")
+
+	RootCmd.PersistentFlags().BoolVarP(
+		&logVerbose, "verbose", "v", false, "log info logs in case verbose is enabled")
 
 	RootCmd.PersistentFlags().Var(&pkind, "provider",
 		fmt.Sprintf("defines the provider to use for getting gitignore content, options: github, local (default: %s)", defProvider))
@@ -113,11 +145,10 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		//fmt.Printf("couldn't load config file %q: %s", cfgFile, err) // TODO: LOG
+		logger().Errorf("couldn't load config file %q: %s", cfgFile, err)
 		setCfgDefaults() // revert to defaults if needed
 		return
 	}
-	//fmt.Println("Using config file:", viper.ConfigFileUsed()) // TODO: LOG
 
 	viper.SetDefault(cfgGithubRepoKey, defGithubRepo)
 	viper.SetDefault(cfgProviderKey, defProvider)
@@ -125,6 +156,12 @@ func initConfig() {
 	if len(pkind) == 0 {
 		pkind = providerKind(viper.GetString(cfgProviderKey))
 	}
+
+	if logFile == "" {
+		logFile = viper.GetString(cfgLogFileKey)
+	}
+
+	logger().Infoln("using config file:", viper.ConfigFileUsed())
 
 	if ghtoken == "" {
 		ghtoken = viper.GetString(cfgGithubTokenKey)

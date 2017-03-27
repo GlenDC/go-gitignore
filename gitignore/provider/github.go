@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/glendc/go-gitignore/gitignore/logger"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
@@ -15,24 +16,28 @@ import (
 // GithubProvider returns a gitignoreProvider,
 // which uses the official gitignore GitHub repo,
 // as a source for all the gitignore info/content requests.
-func GithubProvider(owner, repo, token string) GitignoreProvider {
+func GithubProvider(owner, repo, token string, logger logger.Logger) GitignoreProvider {
 	return &githubProvider{
-		owner: owner,
-		repo:  repo,
-		token: token,
+		owner:  owner,
+		repo:   repo,
+		token:  token,
+		logger: logger,
 	}
 }
 
 type githubProvider struct {
-	owner string
-	repo  string
-	token string
+	owner  string
+	repo   string
+	token  string
+	logger logger.Logger
 }
 
 // Get implements GitignoreProvider.Get
 func (p *githubProvider) Get(template string) (content []byte, err error) {
 	template = strings.TrimSuffix(template, ".gitignore")
 	url := fmt.Sprintf("%s/%s.gitignore", p.getRawURL(), template)
+
+	p.logger.Infof("downloading template from %q", url)
 
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
@@ -63,6 +68,8 @@ func (p *githubProvider) List() (templates []string, err error) {
 
 	// create GitHub client
 	client := github.NewClient(tc)
+
+	p.logger.Infof(`listing templates from "github.com/%s/%s"`, p.owner, p.repo)
 
 	branch, _, err := client.Repositories.GetBranch(
 		ctx, p.owner, p.repo, "master")

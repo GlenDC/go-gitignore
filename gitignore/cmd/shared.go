@@ -34,7 +34,7 @@ func newProvider() (provider.GitignoreProvider, error) {
 			return nil, errors.New("no local path is specified")
 		}
 
-		return provider.LocalProvider(localPath), nil
+		return provider.LocalProvider(localPath, logger()), nil
 
 	case "github":
 		parts := strings.Split(ghrepo, "/")
@@ -42,7 +42,7 @@ func newProvider() (provider.GitignoreProvider, error) {
 			return nil, fmt.Errorf("%q is not a valid github repo", ghrepo)
 		}
 
-		return provider.GithubProvider(parts[0], parts[1], ghtoken), nil
+		return provider.GithubProvider(parts[0], parts[1], ghtoken, logger()), nil
 
 	default:
 		return nil, fmt.Errorf("%q is not a supported provider", pkind)
