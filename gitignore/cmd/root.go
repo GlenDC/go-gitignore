@@ -11,9 +11,14 @@ import (
 // persistent flags
 var (
 	cfgFile string
+
+	// github mode
 	ghtoken string
 	ghrepo  string
-	pkind   providerKind
+	pkind   = providerKind("github")
+
+	// local mode
+	localPath string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -47,14 +52,19 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(
 		&cfgFile, "config", "",
 		"config file (default is $HOME/.go-gitignore.yaml)")
+
 	RootCmd.PersistentFlags().Var(&pkind, "provider",
-		"defines the provider to use for getting gitignore content, default: github, options: github")
+		"defines the provider to use for getting gitignore content, default: github, options: github, local")
 	RootCmd.PersistentFlags().StringVar(
 		&ghtoken, "github-token", "",
 		"github token used for some commands in case github provider is used")
 	RootCmd.PersistentFlags().StringVar(
 		&ghrepo, "github-repo", "github/gitignore",
 		"github repo used in case github provider is used")
+
+	RootCmd.PersistentFlags().StringVar(
+		&localPath, "local-path", "",
+		"local dir used in case local provider is used")
 }
 
 // initConfig reads in config file and ENV variables if set.

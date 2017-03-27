@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -99,8 +98,7 @@ func (p *githubProvider) getTreeEntries(ctx context.Context, client *github.Clie
 			continue
 		}
 
-		if match := ghrex.FindStringSubmatch(entry.GetPath()); len(match) == 2 {
-			template := match[1]
+		if template, ok := extractTemplateName(entry.GetPath()); ok {
 			if subdir != "" {
 				template = subdir + template
 			}
@@ -109,6 +107,9 @@ func (p *githubProvider) getTreeEntries(ctx context.Context, client *github.Clie
 	}
 
 	var subTemplates []string
+	// we go through the subdirs as a last step,
+	// so we can add them in order of being found,
+	// at the front of the templates list
 	for _, subtree := range subtrees {
 		subTemplates, err = p.getTreeEntries(
 			ctx,
@@ -132,8 +133,3 @@ func (p *githubProvider) getRawURL() string {
 		"https://raw.githubusercontent.com/%s/%s/master",
 		p.owner, p.repo)
 }
-
-// Regex
-const ghre = `^([A-Z][A-Za-z+_\-0-9]*)\.gitignore$`
-
-var ghrex = regexp.MustCompile(ghre)
